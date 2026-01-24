@@ -211,7 +211,7 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32L496VGT6P_Instance_t * Instance )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
@@ -228,8 +228,6 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32
             Status = RTC_STM32L496VGT6P_Status_Error;
             break;
         }
-
-        Status = RTC_STM32L496VGT6P_Status_Success;
 
         // FIXME Keep CubeMX generated configurations as is for now
     #if 0
