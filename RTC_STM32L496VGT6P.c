@@ -66,10 +66,18 @@
 // #### Private Type(s) ########################################################
 // #############################################################################
 
+typedef enum RTC_STM32L496VGT6P_Event
+{
+    RTC_STM32L496VGT6P_Event_None = 0,
+    RTC_STM32L496VGT6P_Event_InterruptWakeup = UTIL_BIT( 0 ),
+    RTC_STM32L496VGT6P_Event_InterruptAlarm = UTIL_BIT( 1 ),
+} RTC_STM32L496VGT6P_Event_t;
+
 typedef struct RTC_STM32L496VGT6P_Instance_Context
 {
     RTC_HandleTypeDef RTCx;
     RTC_STM32L496VGT6P_Timestamp_t Timestamp;
+    RTC_STM32L496VGT6P_Event_t Event;
 } RTC_STM32L496VGT6P_Instance_Context_t;
 
 typedef struct RTC_STM32L496VGT6P_Context
@@ -84,6 +92,7 @@ typedef struct RTC_STM32L496VGT6P_Context
 
 void HAL_RTCEx_WakeUpTimerEventCallback( RTC_HandleTypeDef * hrtc );
 void RTC_WKUP_IRQHandler( void );
+void RTC_Alarm_IRQHandler( void );
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_GetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t * Timestamp );
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
@@ -110,17 +119,28 @@ static RTC_STM32L496VGT6P_Context_t RTC_STM32L496VGT6P_Context;
 
 void HAL_RTCEx_WakeUpTimerEventCallback( RTC_HandleTypeDef * hrtc )
 {
-    RTC_Debug( "%s( Handle=%p )", __FUNCTION__, hrtc );
 }
 
 void RTC_WKUP_IRQHandler( void )
 {
-    HAL_RTCEx_WakeUpTimerIRQHandler( &RTC_STM32L496VGT6P_Context.Context[ RTC_STM32L496VGT6P_1 ].RTCx );
+    RTC_STM32L496VGT6P_Instance_Context_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_STM32L496VGT6P_1 ];
+
+    Context->Event |= RTC_STM32L496VGT6P_Event_InterruptWakeup;
+
+    HAL_RTCEx_WakeUpTimerIRQHandler( &Context->RTCx );
+}
+
+void RTC_Alarm_IRQHandler( void )
+{
+    RTC_STM32L496VGT6P_Instance_Context_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_STM32L496VGT6P_1 ];
+
+    Context->Event |= RTC_STM32L496VGT6P_Event_InterruptAlarm;
 }
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_GetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t * Timestamp )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
@@ -165,16 +185,16 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_GetTimestamp( RTC
         Instance->Context->Timestamp.Weekday = sTimeStampDate.WeekDay;
 
         *Timestamp = Instance->Context->Timestamp;
-
-        Status = RTC_STM32L496VGT6P_Status_Success;
     }
     while ( 0 );
+
     return Status;
 }
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t Timestamp )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
@@ -202,10 +222,9 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC
             Status = RTC_STM32L496VGT6P_Status_Error;
             break;
         }
-
-        Status = RTC_STM32L496VGT6P_Status_Success;
     }
     while ( 0 );
+
     return Status;
 }
 
@@ -246,7 +265,8 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_STM32L496VGT6P_Instance_t * Instance )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
@@ -259,8 +279,6 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_S
 
         RTC_STM32L496VGT6P_Instance_Context_t * Context = &RTC_STM32L496VGT6P_Context.Context[ Instance->RTCx ];
 
-        Status = RTC_STM32L496VGT6P_Status_Success;
-
         Instance->Context = Context;
 
         if ( ( Status = RTC_STM32L496VGT6P_Instance_Commit( Instance ) ) != RTC_STM32L496VGT6P_Status_Success )
@@ -269,12 +287,14 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_S
         }
     }
     while ( 0 );
+
     return Status;
 }
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Cycle( RTC_STM32L496VGT6P_Instance_t * Instance )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
@@ -317,29 +337,31 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Cycle( RTC_STM32L
         Instance->Context->Timestamp.Microsecond = ( uint32_t ) UTIL_MillisecondToMicrosecond( UTIL_SecondToMillisecond( subseconds ) ) % 1000;
 
         Instance->Context->Timestamp.Weekday = sTimeStampDate.WeekDay;
-
-        Status = RTC_STM32L496VGT6P_Status_Success;
     }
     while ( 0 );
+
     return Status;
 }
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_DeInitialize( RTC_STM32L496VGT6P_Instance_t * Instance )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
 
-        // TODO RTC HAL De-Initialize
+        // FIXME De-Initialize RTC
+        Status = RTC_STM32L496VGT6P_Status_NotSupported;
     }
     while ( 0 );
+
     return Status;
 }
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Initialize( void )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
@@ -365,8 +387,6 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Initialize( void )
                 break;
             }
         }
-
-        Status = RTC_STM32L496VGT6P_Status_Success;
     }
     while ( 0 );
 
@@ -375,27 +395,27 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Initialize( void )
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Cycle( void )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( void )", __FUNCTION__ );
-
-        Status = RTC_STM32L496VGT6P_Status_Success;
     }
     while ( 0 );
+
     return Status;
 }
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_DeInitialize( void )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( void )", __FUNCTION__ );
-
-        Status = RTC_STM32L496VGT6P_Status_Success;
     }
     while ( 0 );
+
     return Status;
 }
 
@@ -405,73 +425,89 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_DeInitialize( void
 
 RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Initialize( RTC_STM32L496VGT6P_Instance_t * Instance )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+
         if ( ( Status = RTC_STM32L496VGT6P_Context_Initialize( ) ) != RTC_STM32L496VGT6P_Status_Success )
         {
             break;
         }
+
         Status = RTC_STM32L496VGT6P_Instance_Initialize( Instance );
     }
     while ( 0 );
+
     return Status;
 }
 
 RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Cycle( RTC_STM32L496VGT6P_Instance_t * Instance )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
     do
     {
         RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+
         if ( ( Status = RTC_STM32L496VGT6P_Context_Cycle( ) ) != RTC_STM32L496VGT6P_Status_Success )
         {
             break;
         }
+
         Status = RTC_STM32L496VGT6P_Instance_Cycle( Instance );
     }
     while ( 0 );
+
     return Status;
 }
 
 RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_DeInitialize( RTC_STM32L496VGT6P_Instance_t * Instance )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
     do
     {
         RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+
         if ( ( Status = RTC_STM32L496VGT6P_Instance_DeInitialize( Instance ) ) != RTC_STM32L496VGT6P_Status_Success )
         {
             break;
         }
+
         Status = RTC_STM32L496VGT6P_Context_DeInitialize( );
     }
     while ( 0 );
+
     return Status;
 }
 
 RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_GetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t * Timestamp )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( Instance=%p, Timestamp=%p )", __FUNCTION__, Instance, Timestamp );
+
         Status = RTC_STM32L496VGT6P_Instance_GetTimestamp( Instance, Timestamp );
     }
     while ( 0 );
+
     return Status;
 }
 
 RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t Timestamp )
 {
-    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Error;
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
     do
     {
         RTC_Trace( "%s( Instance=%p, Timestamp=%p )", __FUNCTION__, Instance, Timestamp );
+
         Status = RTC_STM32L496VGT6P_Instance_SetTimestamp( Instance, Timestamp );
     }
     while ( 0 );
+
     return Status;
 }
 
