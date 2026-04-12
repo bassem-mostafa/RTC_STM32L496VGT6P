@@ -101,9 +101,9 @@ extern "C"
     /**
      *  @brief RTC STM32L496VGT6P Instance Context Type
      *
-     *  @struct RTC_STM32L496VGT6P_Instance_Context_t
+     *  @struct RTC_STM32L496VGT6P_InstanceContext_t
      */
-    typedef struct RTC_STM32L496VGT6P_Instance_Context RTC_STM32L496VGT6P_Instance_Context_t;
+    typedef struct RTC_STM32L496VGT6P_InstanceContext RTC_STM32L496VGT6P_InstanceContext_t;
 
     /**
      *  @brief RTC STM32L496VGT6P Instance Type
@@ -113,7 +113,7 @@ extern "C"
     typedef struct RTC_STM32L496VGT6P_Instance
     {
         RTC_STM32L496VGT6P_t RTCx;
-        RTC_STM32L496VGT6P_Instance_Context_t * Context;
+        RTC_STM32L496VGT6P_InstanceContext_t * Context;
     } RTC_STM32L496VGT6P_Instance_t;
 
     /**

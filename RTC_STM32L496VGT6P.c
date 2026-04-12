@@ -73,17 +73,17 @@ typedef enum RTC_STM32L496VGT6P_Event
     RTC_STM32L496VGT6P_Event_InterruptAlarm = UTIL_BIT( 1 ),
 } RTC_STM32L496VGT6P_Event_t;
 
-typedef struct RTC_STM32L496VGT6P_Instance_Context
+typedef struct RTC_STM32L496VGT6P_InstanceContext
 {
     RTC_HandleTypeDef RTCx;
     RTC_STM32L496VGT6P_Timestamp_t Timestamp;
     RTC_STM32L496VGT6P_Event_t Event;
-} RTC_STM32L496VGT6P_Instance_Context_t;
+} RTC_STM32L496VGT6P_InstanceContext_t;
 
 typedef struct RTC_STM32L496VGT6P_Context
 {
     TIM_Timestamp_t Timestamp;
-    RTC_STM32L496VGT6P_Instance_Context_t Context[ RTC_STM32L496VGT6P_Count ];
+    RTC_STM32L496VGT6P_InstanceContext_t Context[ RTC_STM32L496VGT6P_Count ];
 } RTC_STM32L496VGT6P_Context_t;
 
 // #############################################################################
@@ -123,7 +123,7 @@ void HAL_RTCEx_WakeUpTimerEventCallback( RTC_HandleTypeDef * hrtc )
 
 void RTC_WKUP_IRQHandler( void )
 {
-    RTC_STM32L496VGT6P_Instance_Context_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_STM32L496VGT6P_1 ];
+    RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_STM32L496VGT6P_1 ];
 
     Context->Event |= RTC_STM32L496VGT6P_Event_InterruptWakeup;
 
@@ -132,7 +132,7 @@ void RTC_WKUP_IRQHandler( void )
 
 void RTC_Alarm_IRQHandler( void )
 {
-    RTC_STM32L496VGT6P_Instance_Context_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_STM32L496VGT6P_1 ];
+    RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_STM32L496VGT6P_1 ];
 
     Context->Event |= RTC_STM32L496VGT6P_Event_InterruptAlarm;
 }
@@ -277,7 +277,7 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_S
             break;
         }
 
-        RTC_STM32L496VGT6P_Instance_Context_t * Context = &RTC_STM32L496VGT6P_Context.Context[ Instance->RTCx ];
+        RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ Instance->RTCx ];
 
         Instance->Context = Context;
 
@@ -378,7 +378,7 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Initialize( void )
 
         for ( RTC_STM32L496VGT6P_t RTC_x = RTC_STM32L496VGT6P_1; RTC_x < RTC_STM32L496VGT6P_Count; ++RTC_x )
         {
-            RTC_STM32L496VGT6P_Instance_Context_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_x ];
+            RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_x ];
 
             HAL_StatusTypeDef HAL_Status = HAL_ERROR;
             if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Context->RTCx, 1000 * RTC_STM32L496VGT6P_TICKS_PER_MS, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
