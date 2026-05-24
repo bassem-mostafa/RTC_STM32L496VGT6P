@@ -124,7 +124,7 @@ extern "C"
     /**
      *  @brief Initializes specified RTC STM32L496VGT6P Instance
      *
-     *  @param[in] Instance Instance
+     *  @param[in] RTCx Peripheral
      *
      *  @return RTC_STM32L496VGT6P_Status_t
      */
@@ -133,7 +133,7 @@ extern "C"
     /**
      *  @brief Cycles specified RTC STM32L496VGT6P Instance
      *
-     *  @param[in] Instance Instance
+     *  @param[in] RTCx Peripheral
      *
      *  @return RTC_STM32L496VGT6P_Status_t
      */
@@ -142,7 +142,7 @@ extern "C"
     /**
      *  @brief De-initializes specified RTC STM32L496VGT6P Instance
      *
-     *  @param[in] Instance Instance
+     *  @param[in] RTCx Peripheral
      *
      *  @return RTC_STM32L496VGT6P_Status_t
      */
@@ -151,7 +151,7 @@ extern "C"
     /**
      *  @brief Get time-stamp from specified RTC STM32L496VGT6P Instance
      *
-     *  @param[in]  Instance Instance
+     *  @param[in]  RTCx      Peripheral
      *  @param[out] Timestamp Time-stamp
      *
      *  @return RTC_STM32L496VGT6P_Status_t
@@ -161,7 +161,7 @@ extern "C"
     /**
      *  @brief Set time-stamp to specified RTC STM32L496VGT6P Instance
      *
-     *  @param[in] Instance  Instance
+     *  @param[in] RTCx      Peripheral
      *  @param[in] Timestamp Time-stamp
      *
      *  @return RTC_STM32L496VGT6P_Status_t
