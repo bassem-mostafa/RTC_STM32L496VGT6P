@@ -94,14 +94,14 @@ void HAL_RTCEx_WakeUpTimerEventCallback( RTC_HandleTypeDef * hrtc );
 void RTC_WKUP_IRQHandler( void );
 void RTC_Alarm_IRQHandler( void );
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_GetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t * Timestamp );
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_GetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t * Timestamp );
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32L496VGT6P_Instance_t * Instance );
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32L496VGT6P_t RTCx );
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_STM32L496VGT6P_Instance_t * Instance );
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Cycle( RTC_STM32L496VGT6P_Instance_t * Instance );
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_DeInitialize( RTC_STM32L496VGT6P_Instance_t * Instance );
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_STM32L496VGT6P_t RTCx );
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Cycle( RTC_STM32L496VGT6P_t RTCx );
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_DeInitialize( RTC_STM32L496VGT6P_t RTCx );
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Initialize( void );
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Cycle( void );
@@ -137,67 +137,74 @@ void RTC_Alarm_IRQHandler( void )
     Context->Event |= RTC_STM32L496VGT6P_Event_InterruptAlarm;
 }
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_GetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t * Timestamp )
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_GetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t * Timestamp )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTC=%d, Timestamp=%p )", __FUNCTION__, RTCx, Timestamp );
+
+        RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTCx ];
 
         // TODO Either update RTC using the context timestamp
         // TODO or get the new timestamp into the context
         // FIXME For now use GET ONLY
 
-        RTC_DateTypeDef sTimeStampDate;
+        HAL_StatusTypeDef HAL_Status = HAL_OK;
         RTC_TimeTypeDef sTimeStamp;
+        RTC_DateTypeDef sTimeStampDate;
 
-        if ( HAL_RTC_GetDate( &Instance->Context->RTCx, &sTimeStampDate, RTC_FORMAT_BIN ) != HAL_OK )
+        if ( ( HAL_Status = HAL_RTC_GetTime( &Context->RTCx, &sTimeStamp, RTC_FORMAT_BIN ) ) != HAL_OK )
         {
             // FIXME
+            RTC_Warning( "RTC=%d HAL_RTC_GetTime Failed, Status %d", RTCx, HAL_Status );
         }
 
-        if ( HAL_RTC_GetTime( &Instance->Context->RTCx, &sTimeStamp, RTC_FORMAT_BIN ) != HAL_OK )
+        if ( ( HAL_Status = HAL_RTC_GetDate( &Context->RTCx, &sTimeStampDate, RTC_FORMAT_BIN ) ) != HAL_OK )
         {
             // FIXME
+            RTC_Warning( "RTC=%d HAL_RTC_GetDate Failed, Status %d", RTCx, HAL_Status );
         }
 
         // FIXME
-        //    if ( HAL_RTCEx_GetTimeStamp( &Instance->Context->RTCx, &sTimeStamp, &sTimeStampDate, RTC_FORMAT_BIN ) != HAL_OK )
+        //    if ( HAL_RTCEx_GetTimeStamp( &Context->RTCx, &sTimeStamp, &sTimeStampDate, RTC_FORMAT_BIN ) != HAL_OK )
         //    {
         //      // FIXME
         //    }
 
-        Instance->Context->Timestamp.Year = 2000 + sTimeStampDate.Year;
-        Instance->Context->Timestamp.Month = RTC_Bcd2ToByte( sTimeStampDate.Month );
-        Instance->Context->Timestamp.Day = sTimeStampDate.Date;
+        Context->Timestamp.Year = 2000 + sTimeStampDate.Year;
+        Context->Timestamp.Month = RTC_Bcd2ToByte( sTimeStampDate.Month );
+        Context->Timestamp.Day = sTimeStampDate.Date;
 
-        Instance->Context->Timestamp.Hour = sTimeStamp.Hours;
-        Instance->Context->Timestamp.Minute = sTimeStamp.Minutes;
-        Instance->Context->Timestamp.Second = sTimeStamp.Seconds;
+        Context->Timestamp.Hour = sTimeStamp.Hours;
+        Context->Timestamp.Minute = sTimeStamp.Minutes;
+        Context->Timestamp.Second = sTimeStamp.Seconds;
 
         // FIXME
         double subseconds = sTimeStamp.SecondFraction - sTimeStamp.SubSeconds;
         subseconds /= sTimeStamp.SecondFraction + 1;
-        Instance->Context->Timestamp.Millisecond = ( uint32_t ) UTIL_SecondToMillisecond( subseconds ) % 1000;
-        Instance->Context->Timestamp.Microsecond = ( uint32_t ) UTIL_MillisecondToMicrosecond( UTIL_SecondToMillisecond( subseconds ) ) % 1000;
+        Context->Timestamp.Millisecond = ( uint32_t ) UTIL_SecondToMillisecond( subseconds ) % 1000;
+        Context->Timestamp.Microsecond = ( uint32_t ) UTIL_MillisecondToMicrosecond( UTIL_SecondToMillisecond( subseconds ) ) % 1000;
 
-        Instance->Context->Timestamp.Weekday = sTimeStampDate.WeekDay;
+        Context->Timestamp.Weekday = sTimeStampDate.WeekDay;
 
-        *Timestamp = Instance->Context->Timestamp;
+        *Timestamp = Context->Timestamp;
     }
     while ( 0 );
 
     return Status;
 }
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t Timestamp )
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTCx=%d, Timestamp={Weekday=%d, Year=%d, Month=%d, Day=%d, Hour=%d, Minute=%d, Second=%d, Millisecond=%d, Microsecond=%d} )", __FUNCTION__, RTCx, Timestamp.Weekday, Timestamp.Year, Timestamp.Month, Timestamp.Day, Timestamp.Hour, Timestamp.Minute, Timestamp.Second, Timestamp.Millisecond, Timestamp.Microsecond );
+
+        RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTCx ];
 
         RTC_DateTypeDef sTimeStampDate;
         RTC_TimeTypeDef sTimeStamp;
@@ -207,7 +214,7 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC
         sTimeStamp.Seconds = Timestamp.Second;
         sTimeStamp.DayLightSaving = RTC_DAYLIGHTSAVING_NONE;
         sTimeStamp.StoreOperation = RTC_STOREOPERATION_RESET;
-        if ( HAL_RTC_SetTime( &Instance->Context->RTCx, &sTimeStamp, RTC_FORMAT_BIN ) != HAL_OK )
+        if ( HAL_RTC_SetTime( &Context->RTCx, &sTimeStamp, RTC_FORMAT_BIN ) != HAL_OK )
         {
             Status = RTC_STM32L496VGT6P_Status_Error;
             break;
@@ -217,7 +224,7 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC
         sTimeStampDate.Date = Timestamp.Day;
         sTimeStampDate.Year = Timestamp.Year - 2000;
 
-        if ( HAL_RTC_SetDate( &Instance->Context->RTCx, &sTimeStampDate, RTC_FORMAT_BIN ) != HAL_OK )
+        if ( HAL_RTC_SetDate( &Context->RTCx, &sTimeStampDate, RTC_FORMAT_BIN ) != HAL_OK )
         {
             Status = RTC_STM32L496VGT6P_Status_Error;
             break;
@@ -228,34 +235,26 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC
     return Status;
 }
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32L496VGT6P_Instance_t * Instance )
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32L496VGT6P_t RTCx )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTCx=%d )", __FUNCTION__, RTCx );
 
-        if ( Instance == NULL )
-        {
-            Status = RTC_STM32L496VGT6P_Status_ArgumentInvalid;
-            break;
-        }
+        RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTCx ];
 
-        if ( Instance->Context == NULL )
+        UTIL_UNUSED( Context );
+
+        // FIXME Keep CubeMX generated configurations as is for now
+    #if 0
+        HAL_StatusTypeDef HAL_Status = HAL_ERROR;
+        if ( ( HAL_Status = HAL_RTC_Init( &Context->RTCx ) ) != HAL_OK )
         {
             Status = RTC_STM32L496VGT6P_Status_Error;
             break;
         }
-
-        // FIXME Keep CubeMX generated configurations as is for now
-    #if 0
-    HAL_StatusTypeDef HAL_Status = HAL_ERROR;
-    if ( ( HAL_Status = HAL_RTC_Init( &Instance->Context->RTCx ) ) != HAL_OK )
-    {
-      Status = RTC_STM32L496VGT6P_Status_Error;
-      break;
-    }
     #endif
     }
     while ( 0 );
@@ -263,25 +262,20 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32
     return Status;
 }
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_STM32L496VGT6P_Instance_t * Instance )
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_STM32L496VGT6P_t RTCx )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTCx=%d )", __FUNCTION__, RTCx );
 
-        if ( Instance == NULL )
-        {
-            Status = RTC_STM32L496VGT6P_Status_ArgumentInvalid;
-            break;
-        }
+        RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTCx ];
 
-        RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ Instance->RTCx ];
+        Context->Event = RTC_STM32L496VGT6P_Event_None;
 
-        Instance->Context = Context;
-
-        if ( ( Status = RTC_STM32L496VGT6P_Instance_Commit( Instance ) ) != RTC_STM32L496VGT6P_Status_Success )
+        // FIXME Is there any RTC configuration to be committed ?
+        if ( ( Status = RTC_STM32L496VGT6P_Instance_Commit( RTCx ) ) != RTC_STM32L496VGT6P_Status_Success )
         {
             break;
         }
@@ -291,65 +285,70 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Initialize( RTC_S
     return Status;
 }
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Cycle( RTC_STM32L496VGT6P_Instance_t * Instance )
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Cycle( RTC_STM32L496VGT6P_t RTCx )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTCx=%d )", __FUNCTION__, RTCx );
+
+        RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTCx ];
 
         // TODO Either update RTC using the context timestamp
         // TODO or get the new timestamp into the context
         // FIXME For now use GET ONLY
 
-        RTC_DateTypeDef sTimeStampDate;
+        HAL_StatusTypeDef HAL_Status = HAL_OK;
         RTC_TimeTypeDef sTimeStamp;
+        RTC_DateTypeDef sTimeStampDate;
 
-        if ( HAL_RTC_GetDate( &Instance->Context->RTCx, &sTimeStampDate, RTC_FORMAT_BIN ) != HAL_OK )
+        if ( ( HAL_Status = HAL_RTC_GetTime( &Context->RTCx, &sTimeStamp, RTC_FORMAT_BIN ) ) != HAL_OK )
         {
             // FIXME
+            RTC_Warning( "RTC=%d HAL_RTC_GetTime Failed, Status %d", RTCx, HAL_Status );
         }
 
-        if ( HAL_RTC_GetTime( &Instance->Context->RTCx, &sTimeStamp, RTC_FORMAT_BIN ) != HAL_OK )
+        if ( ( HAL_Status = HAL_RTC_GetDate( &Context->RTCx, &sTimeStampDate, RTC_FORMAT_BIN ) ) != HAL_OK )
         {
             // FIXME
+            RTC_Warning( "RTC=%d HAL_RTC_GetDate Failed, Status %d", RTCx, HAL_Status );
         }
 
         // FIXME
-        //    if ( HAL_RTCEx_GetTimeStamp( &Instance->Context->RTCx, &sTimeStamp, &sTimeStampDate, RTC_FORMAT_BIN ) != HAL_OK )
+        //    if ( HAL_RTCEx_GetTimeStamp( &Context->RTCx, &sTimeStamp, &sTimeStampDate, RTC_FORMAT_BIN ) != HAL_OK )
         //    {
         //      // FIXME
         //    }
 
-        Instance->Context->Timestamp.Year = 2000 + sTimeStampDate.Year;
-        Instance->Context->Timestamp.Month = RTC_Bcd2ToByte( sTimeStampDate.Month );
-        Instance->Context->Timestamp.Day = sTimeStampDate.Date;
+        Context->Timestamp.Year = 2000 + sTimeStampDate.Year;
+        Context->Timestamp.Month = RTC_Bcd2ToByte( sTimeStampDate.Month );
+        Context->Timestamp.Day = sTimeStampDate.Date;
 
-        Instance->Context->Timestamp.Hour = sTimeStamp.Hours;
-        Instance->Context->Timestamp.Minute = sTimeStamp.Minutes;
-        Instance->Context->Timestamp.Second = sTimeStamp.Seconds;
+        Context->Timestamp.Hour = sTimeStamp.Hours;
+        Context->Timestamp.Minute = sTimeStamp.Minutes;
+        Context->Timestamp.Second = sTimeStamp.Seconds;
 
         // FIXME
         double subseconds = sTimeStamp.SecondFraction - sTimeStamp.SubSeconds;
         subseconds /= sTimeStamp.SecondFraction + 1;
-        Instance->Context->Timestamp.Millisecond = ( uint32_t ) UTIL_SecondToMillisecond( subseconds ) % 1000;
-        Instance->Context->Timestamp.Microsecond = ( uint32_t ) UTIL_MillisecondToMicrosecond( UTIL_SecondToMillisecond( subseconds ) ) % 1000;
+        Context->Timestamp.Millisecond = ( uint32_t ) UTIL_SecondToMillisecond( subseconds ) % 1000;
+        Context->Timestamp.Microsecond = ( uint32_t ) UTIL_MillisecondToMicrosecond( UTIL_SecondToMillisecond( subseconds ) ) % 1000;
 
-        Instance->Context->Timestamp.Weekday = sTimeStampDate.WeekDay;
+        Context->Timestamp.Weekday = sTimeStampDate.WeekDay;
     }
     while ( 0 );
 
     return Status;
 }
 
-static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_DeInitialize( RTC_STM32L496VGT6P_Instance_t * Instance )
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_DeInitialize( RTC_STM32L496VGT6P_t RTCx )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTCx=%d )", __FUNCTION__, RTCx );
 
         // FIXME De-Initialize RTC
         Status = RTC_STM32L496VGT6P_Status_NotSupported;
@@ -376,17 +375,18 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Initialize( void )
         RTC_STM32L496VGT6P_Context.Context[ RTC_STM32L496VGT6P_1 ].RTCx = hrtc;
     #endif
 
-        for ( RTC_STM32L496VGT6P_t RTC_x = RTC_STM32L496VGT6P_1; RTC_x < RTC_STM32L496VGT6P_Count; ++RTC_x )
-        {
-            RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_x ];
-
-            HAL_StatusTypeDef HAL_Status = HAL_ERROR;
-            if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Context->RTCx, 1000 * RTC_STM32L496VGT6P_TICKS_PER_MS, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
-            {
-                Status = RTC_STM32L496VGT6P_Status_Error;
-                break;
-            }
-        }
+        // TODO Verify importance or usage of wake-up timer events
+        // for ( RTC_STM32L496VGT6P_t RTC_x = RTC_STM32L496VGT6P_1; RTC_x < RTC_STM32L496VGT6P_Count; ++RTC_x )
+        // {
+        //     RTC_STM32L496VGT6P_InstanceContext_t * Context = &RTC_STM32L496VGT6P_Context.Context[ RTC_x ];
+        //
+        //     HAL_StatusTypeDef HAL_Status = HAL_ERROR;
+        //     if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Context->RTCx, 1000 * RTC_STM32L496VGT6P_TICKS_PER_MS, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
+        //     {
+        //         Status = RTC_STM32L496VGT6P_Status_Error;
+        //         break;
+        //     }
+        // }
     }
     while ( 0 );
 
@@ -400,6 +400,8 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Cycle( void )
     do
     {
         RTC_Trace( "%s( void )", __FUNCTION__ );
+
+        UTIL_UNUSED( RTC_STM32L496VGT6P_Context );
     }
     while ( 0 );
 
@@ -413,6 +415,8 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_DeInitialize( void
     do
     {
         RTC_Trace( "%s( void )", __FUNCTION__ );
+
+        UTIL_UNUSED( RTC_STM32L496VGT6P_Context );
     }
     while ( 0 );
 
@@ -423,53 +427,53 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_DeInitialize( void
 // #### Public Method(s) #######################################################
 // #############################################################################
 
-RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Initialize( RTC_STM32L496VGT6P_Instance_t * Instance )
+RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Initialize( RTC_STM32L496VGT6P_t RTCx )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTCx=%d )", __FUNCTION__, RTCx );
 
         if ( ( Status = RTC_STM32L496VGT6P_Context_Initialize( ) ) != RTC_STM32L496VGT6P_Status_Success )
         {
             break;
         }
 
-        Status = RTC_STM32L496VGT6P_Instance_Initialize( Instance );
+        Status = RTC_STM32L496VGT6P_Instance_Initialize( RTCx );
     }
     while ( 0 );
 
     return Status;
 }
 
-RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Cycle( RTC_STM32L496VGT6P_Instance_t * Instance )
+RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Cycle( RTC_STM32L496VGT6P_t RTCx )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTCx=%d )", __FUNCTION__, RTCx );
 
         if ( ( Status = RTC_STM32L496VGT6P_Context_Cycle( ) ) != RTC_STM32L496VGT6P_Status_Success )
         {
             break;
         }
 
-        Status = RTC_STM32L496VGT6P_Instance_Cycle( Instance );
+        Status = RTC_STM32L496VGT6P_Instance_Cycle( RTCx );
     }
     while ( 0 );
 
     return Status;
 }
 
-RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_DeInitialize( RTC_STM32L496VGT6P_Instance_t * Instance )
+RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_DeInitialize( RTC_STM32L496VGT6P_t RTCx )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
     do
     {
-        RTC_Trace( "%s( Instance=%p )", __FUNCTION__, Instance );
+        RTC_Trace( "%s( RTCx=%d )", __FUNCTION__, RTCx );
 
-        if ( ( Status = RTC_STM32L496VGT6P_Instance_DeInitialize( Instance ) ) != RTC_STM32L496VGT6P_Status_Success )
+        if ( ( Status = RTC_STM32L496VGT6P_Instance_DeInitialize( RTCx ) ) != RTC_STM32L496VGT6P_Status_Success )
         {
             break;
         }
@@ -481,30 +485,30 @@ RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_DeInitialize( RTC_STM32L496VGT6P_
     return Status;
 }
 
-RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_GetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t * Timestamp )
+RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_GetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t * Timestamp )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p, Timestamp=%p )", __FUNCTION__, Instance, Timestamp );
+        RTC_Trace( "%s( RTCx=%d, Timestamp=%p )", __FUNCTION__, RTCx, Timestamp );
 
-        Status = RTC_STM32L496VGT6P_Instance_GetTimestamp( Instance, Timestamp );
+        Status = RTC_STM32L496VGT6P_Instance_GetTimestamp( RTCx, Timestamp );
     }
     while ( 0 );
 
     return Status;
 }
 
-RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t Timestamp )
+RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp )
 {
     RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
 
     do
     {
-        RTC_Trace( "%s( Instance=%p, Timestamp=%p )", __FUNCTION__, Instance, Timestamp );
+        RTC_Trace( "%s( RTCx=%d, Timestamp={Weekday=%d, Year=%d, Month=%d, Day=%d, Hour=%d, Minute=%d, Second=%d, Millisecond=%d, Microsecond=%d} )", __FUNCTION__, RTCx, Timestamp.Weekday, Timestamp.Year, Timestamp.Month, Timestamp.Day, Timestamp.Hour, Timestamp.Minute, Timestamp.Second, Timestamp.Millisecond, Timestamp.Microsecond );
 
-        Status = RTC_STM32L496VGT6P_Instance_SetTimestamp( Instance, Timestamp );
+        Status = RTC_STM32L496VGT6P_Instance_SetTimestamp( RTCx, Timestamp );
     }
     while ( 0 );
 

@@ -99,24 +99,6 @@ extern "C"
     } RTC_STM32L496VGT6P_t;
 
     /**
-     *  @brief RTC STM32L496VGT6P Instance Context Type
-     *
-     *  @struct RTC_STM32L496VGT6P_InstanceContext_t
-     */
-    typedef struct RTC_STM32L496VGT6P_InstanceContext RTC_STM32L496VGT6P_InstanceContext_t;
-
-    /**
-     *  @brief RTC STM32L496VGT6P Instance Type
-     *
-     *  @struct RTC_STM32L496VGT6P_Instance_t
-     */
-    typedef struct RTC_STM32L496VGT6P_Instance
-    {
-        RTC_STM32L496VGT6P_t RTCx;
-        RTC_STM32L496VGT6P_InstanceContext_t * Context;
-    } RTC_STM32L496VGT6P_Instance_t;
-
-    /**
      *  @brief RTC STM32L496VGT6P Time-stamp Type
      */
     typedef struct RTC_STM32L496VGT6P_Timestamp
@@ -146,7 +128,7 @@ extern "C"
      *
      *  @return RTC_STM32L496VGT6P_Status_t
      */
-    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Initialize( RTC_STM32L496VGT6P_Instance_t * Instance );
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Initialize( RTC_STM32L496VGT6P_t RTCx );
 
     /**
      *  @brief Cycles specified RTC STM32L496VGT6P Instance
@@ -155,7 +137,7 @@ extern "C"
      *
      *  @return RTC_STM32L496VGT6P_Status_t
      */
-    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Cycle( RTC_STM32L496VGT6P_Instance_t * Instance );
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Cycle( RTC_STM32L496VGT6P_t RTCx );
 
     /**
      *  @brief De-initializes specified RTC STM32L496VGT6P Instance
@@ -164,7 +146,7 @@ extern "C"
      *
      *  @return RTC_STM32L496VGT6P_Status_t
      */
-    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_DeInitialize( RTC_STM32L496VGT6P_Instance_t * Instance );
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_DeInitialize( RTC_STM32L496VGT6P_t RTCx );
 
     /**
      *  @brief Get time-stamp from specified RTC STM32L496VGT6P Instance
@@ -174,7 +156,7 @@ extern "C"
      *
      *  @return RTC_STM32L496VGT6P_Status_t
      */
-    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_GetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t * Timestamp );
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_GetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t * Timestamp );
 
     /**
      *  @brief Set time-stamp to specified RTC STM32L496VGT6P Instance
@@ -184,7 +166,7 @@ extern "C"
      *
      *  @return RTC_STM32L496VGT6P_Status_t
      */
-    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetTimestamp( RTC_STM32L496VGT6P_Instance_t * Instance, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
 
     // TODO Add More APIs
 
