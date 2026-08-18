@@ -168,7 +168,15 @@ extern "C"
      */
     RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
 
-    // TODO Add More APIs
+    /**
+     *  @brief Set alarm time-stamp to specified RTC STM32L496VGT6P Instance
+     *
+     *  @param[in] RTCx      Peripheral
+     *  @param[in] Timestamp Time-stamp alarm
+     *
+     *  @return RTC_STM32L496VGT6P_Status_t
+     */
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetAlarm( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
 
     // #############################################################################
     // #### Public Variable(s) #####################################################
