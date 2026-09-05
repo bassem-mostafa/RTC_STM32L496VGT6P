@@ -465,7 +465,7 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Initialize( void )
             RTC_STM32L496VGT6P_Instance_t * Instance = &RTC_STM32L496VGT6P_Context.Instance[ RTC_x ];
 
             HAL_StatusTypeDef HAL_Status = HAL_OK;
-            if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Instance->RTCx, RTC_STM32L496VGT6P_TICKS_PER_MS, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
+            if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Instance->RTCx, RTC_STM32L496VGT6P_TICKS_PER_MS - 1, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
             {
                 Status = RTC_STM32L496VGT6P_Status_Error;
                 break;
