@@ -457,18 +457,20 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Context_Initialize( void )
         RTC_STM32L496VGT6P_Context.Instance[ RTC_STM32L496VGT6P_1 ].RTCx = hrtc;
     #endif
 
-        // TODO Verify importance or usage of wake-up timer events
-        // for ( RTC_STM32L496VGT6P_t RTC_x = RTC_STM32L496VGT6P_1; RTC_x < RTC_STM32L496VGT6P_Count; ++RTC_x )
-        // {
-        //     RTC_STM32L496VGT6P_Instance_t * Instance = &RTC_STM32L496VGT6P_Context.Instance[ RTC_x ];
-        //
-        //     HAL_StatusTypeDef HAL_Status = HAL_ERROR;
-        //     if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Instance->RTCx, 1000 * RTC_STM32L496VGT6P_TICKS_PER_MS, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
-        //     {
-        //         Status = RTC_STM32L496VGT6P_Status_Error;
-        //         break;
-        //     }
-        // }
+        // FIXME RTC wake-up is being used as kernel ticks, ticks should be reported to kernel in some way
+        // FIXME Also wake-up should have enable and disable procedures
+        // @note Configures RTC to wake-up every ~1ms
+        for ( RTC_STM32L496VGT6P_t RTC_x = RTC_STM32L496VGT6P_1; RTC_x < RTC_STM32L496VGT6P_Count; ++RTC_x )
+        {
+            RTC_STM32L496VGT6P_Instance_t * Instance = &RTC_STM32L496VGT6P_Context.Instance[ RTC_x ];
+
+            HAL_StatusTypeDef HAL_Status = HAL_OK;
+            if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Instance->RTCx, RTC_STM32L496VGT6P_TICKS_PER_MS, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
+            {
+                Status = RTC_STM32L496VGT6P_Status_Error;
+                break;
+            }
+        }
     }
     while ( 0 );
 
