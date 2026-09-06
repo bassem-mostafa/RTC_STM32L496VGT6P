@@ -178,6 +178,16 @@ extern "C"
      */
     RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetAlarm( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
 
+    /**
+     *  @brief Set wake-up period to specified RTC STM32L496VGT6P Instance
+     *
+     *  @param[in] RTCx   Peripheral
+     *  @param[in] Period Wake-up period in milliseconds
+     *
+     *  @return RTC_STM32L496VGT6P_Status_t
+     */
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetWakeUp( RTC_STM32L496VGT6P_t RTCx, uint32_t Period );
+
     // #############################################################################
     // #### Public Variable(s) #####################################################
     // #############################################################################

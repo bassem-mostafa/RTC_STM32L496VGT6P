@@ -97,6 +97,7 @@ void RTC_Alarm_IRQHandler( void );
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_GetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t * Timestamp );
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetTimestamp( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetAlarm( RTC_STM32L496VGT6P_t RTCx, RTC_STM32L496VGT6P_Timestamp_t Timestamp );
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetWakeUp( RTC_STM32L496VGT6P_t RTCx, uint32_t Period );
 
 static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_Commit( RTC_STM32L496VGT6P_t RTCx );
 
@@ -288,6 +289,28 @@ static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetAlarm( RTC_STM
         sAlarm.Alarm = RTC_ALARM_A;
 
         if ( ( HAL_Status = HAL_RTC_SetAlarm_IT( &Instance->RTCx, &sAlarm, RTC_FORMAT_BIN ) ) != HAL_OK )
+        {
+            Status = RTC_STM32L496VGT6P_Status_Error;
+            break;
+        }
+    }
+    while ( 0 );
+
+    return Status;
+}
+
+static RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_Instance_SetWakeUp( RTC_STM32L496VGT6P_t RTCx, uint32_t Period )
+{
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+    HAL_StatusTypeDef HAL_Status = HAL_OK;
+
+    do
+    {
+        RTC_Trace( "%s( RTCx=%d, Period=%d )", __FUNCTION__, RTCx, Period );
+
+        RTC_STM32L496VGT6P_Instance_t * Instance = &RTC_STM32L496VGT6P_Context.Instance[ RTCx ];
+
+        if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Instance->RTCx, ( Period * RTC_STM32L496VGT6P_TICKS_PER_MS ) - 1, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
         {
             Status = RTC_STM32L496VGT6P_Status_Error;
             break;
@@ -608,6 +631,21 @@ RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetAlarm( RTC_STM32L496VGT6P_t RT
         RTC_Trace( "%s( RTCx=%d, Timestamp={Weekday=%d, Year=%d, Month=%d, Day=%d, Hour=%d, Minute=%d, Second=%d, Millisecond=%d, Microsecond=%d} )", __FUNCTION__, RTCx, Timestamp.Weekday, Timestamp.Year, Timestamp.Month, Timestamp.Day, Timestamp.Hour, Timestamp.Minute, Timestamp.Second, Timestamp.Millisecond, Timestamp.Microsecond );
 
         Status = RTC_STM32L496VGT6P_Instance_SetAlarm( RTCx, Timestamp );
+    }
+    while ( 0 );
+
+    return Status;
+}
+
+RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetWakeUp( RTC_STM32L496VGT6P_t RTCx, uint32_t Period )
+{
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+
+    do
+    {
+        RTC_Trace( "%s( RTCx=%d, Period=%d )", __FUNCTION__, RTCx, Period );
+
+        Status = RTC_STM32L496VGT6P_Instance_SetWakeUp( RTCx, Period );
     }
     while ( 0 );
 
