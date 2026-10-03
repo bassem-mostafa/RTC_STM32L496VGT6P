@@ -60,7 +60,8 @@
 // #### Private Macro(s) #######################################################
 // #############################################################################
 
-    #define RTC_STM32L496VGT6P_TICKS_PER_MS 2
+    #define RTC_STM32L496VGT6P_TICKS_PER_MS        2
+    #define RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE UTIL_SizeOf( uint32_t )
 
 // #############################################################################
 // #### Private Type(s) ########################################################
@@ -481,6 +482,129 @@ RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetWakeUp( RTC_STM32L496VGT6P_t R
         RTC_STM32L496VGT6P_Instance_t * Instance = &RTC_STM32L496VGT6P_Context.Instance[ RTCx ];
 
         if ( ( HAL_Status = HAL_RTCEx_SetWakeUpTimer_IT( &Instance->RTCx, ( Period * RTC_STM32L496VGT6P_TICKS_PER_MS ) - 1, RTC_WAKEUPCLOCK_RTCCLK_DIV16 ) ) != HAL_OK )
+        {
+            Status = RTC_STM32L496VGT6P_Status_Error;
+            break;
+        }
+    }
+    while ( 0 );
+
+    return Status;
+}
+
+RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_MemoryWrite( RTC_STM32L496VGT6P_t RTCx, uint32_t Address, uint8_t * Data, uint32_t DataLength )
+{
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+    uint32_t copy_length = 0;
+    uint32_t offset = 0;
+
+    do
+    {
+        RTC_Trace( "%s( RTCx=%d, Address=%d, Data=%p, Length=%d )", __FUNCTION__, RTCx, Address, Data, DataLength );
+
+        RTC_STM32L496VGT6P_Instance_t * Instance = &RTC_STM32L496VGT6P_Context.Instance[ RTCx ];
+
+        offset = UTIL_Modulus( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE );
+        if ( offset != 0 )
+        {
+            // Copy firstly not 32-bit aligned bytes (if any)
+            uint32_t value_u32 = *( ( &Instance->RTCx.Instance->BKP0R ) + UTIL_Floor( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE ) );
+            uint8_t * value_u8 = ( ( uint8_t * ) ( &value_u32 ) ) + offset;
+            copy_length = UTIL_Min( RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE - offset, DataLength );
+            memcpy( value_u8, Data, copy_length );
+            Data += copy_length;
+            Address += copy_length;
+            DataLength -= copy_length;
+
+            // Write back
+            *( ( &Instance->RTCx.Instance->BKP0R ) + UTIL_Floor( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE ) ) = value_u32;
+        }
+
+        // Copy intermediate 32-bit aligned bytes (if any)
+        copy_length = UTIL_Floor( DataLength, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE );
+        for ( ; copy_length; --copy_length )
+        {
+            // Write back
+            *( ( &Instance->RTCx.Instance->BKP0R ) + UTIL_Floor( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE ) ) = *( uint32_t * ) Data;
+            Data += RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE;
+            Address += RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE;
+            DataLength -= RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE;
+        }
+
+        if ( DataLength )
+        {
+            // Copy lastly not 32-bit aligned bytes (if any)
+            uint32_t value_u32 = *( ( &Instance->RTCx.Instance->BKP0R ) + UTIL_Floor( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE ) );
+            uint8_t * value_u8 = ( ( uint8_t * ) ( &value_u32 ) );
+            copy_length = UTIL_Min( RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE, DataLength );
+            memcpy( value_u8, Data, copy_length );
+            Data += copy_length;
+            Address += copy_length;
+            DataLength -= copy_length;
+
+            // Write back
+            *( ( &Instance->RTCx.Instance->BKP0R ) + UTIL_Floor( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE ) ) = value_u32;
+        }
+
+        if ( DataLength != 0 )
+        {
+            Status = RTC_STM32L496VGT6P_Status_Error;
+            break;
+        }
+    }
+    while ( 0 );
+
+    return Status;
+}
+
+RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_MemoryRead( RTC_STM32L496VGT6P_t RTCx, uint32_t Address, uint8_t * Data, uint32_t DataLength )
+{
+    RTC_STM32L496VGT6P_Status_t Status = RTC_STM32L496VGT6P_Status_Success;
+    uint32_t copy_length = 0;
+    uint32_t offset = 0;
+
+    do
+    {
+        RTC_Trace( "%s( RTCx=%d, Address=%d, Data=%p, Length=%d )", __FUNCTION__, RTCx, Address, Data, DataLength );
+
+        RTC_STM32L496VGT6P_Instance_t * Instance = &RTC_STM32L496VGT6P_Context.Instance[ RTCx ];
+
+        offset = UTIL_Modulus( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE );
+        if ( offset != 0 )
+        {
+            // Copy firstly not 32-bit aligned bytes (if any)
+            uint32_t value_u32 = *( ( &Instance->RTCx.Instance->BKP0R ) + UTIL_Floor( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE ) );
+            uint8_t * value_u8 = ( ( uint8_t * ) ( &value_u32 ) ) + offset;
+            copy_length = UTIL_Min( RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE - offset, DataLength );
+            memcpy( Data, value_u8, copy_length );
+            Data += copy_length;
+            Address += copy_length;
+            DataLength -= copy_length;
+        }
+
+        // Copy intermediate 32-bit aligned bytes (if any)
+        copy_length = UTIL_Floor( DataLength, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE );
+        for ( ; copy_length; --copy_length )
+        {
+            *( uint32_t * ) Data = *( ( &Instance->RTCx.Instance->BKP0R ) + UTIL_Floor( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE ) );
+            Data += RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE;
+            Address += RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE;
+            DataLength -= RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE;
+        }
+
+        if ( DataLength )
+        {
+            // Copy lastly not 32-bit aligned bytes (if any)
+            uint32_t value_u32 = *( ( &Instance->RTCx.Instance->BKP0R ) + UTIL_Floor( Address, RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE ) );
+            uint8_t * value_u8 = ( ( uint8_t * ) ( &value_u32 ) );
+            copy_length = UTIL_Min( RTC_STM32L496VGT6P_REGISTER_VALUE_SIZE, DataLength );
+            memcpy( Data, value_u8, copy_length );
+            Data += copy_length;
+            Address += copy_length;
+            DataLength -= copy_length;
+        }
+
+        if ( DataLength != 0 )
         {
             Status = RTC_STM32L496VGT6P_Status_Error;
             break;

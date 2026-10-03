@@ -188,6 +188,30 @@ extern "C"
      */
     RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_SetWakeUp( RTC_STM32L496VGT6P_t RTCx, uint32_t Period );
 
+    /**
+     *  @brief Write data to specified RTC STM32L496VGT6P Instance memory
+     *
+     *  @param[in] RTCx       Peripheral
+     *  @param[in] Address    Memory start address
+     *  @param[in] Data       Data buffer
+     *  @param[in] DataLength Data buffer length
+     *
+     *  @return RTC_STM32L496VGT6P_Status_t
+     */
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_MemoryWrite( RTC_STM32L496VGT6P_t RTCx, uint32_t Address, uint8_t * Data, uint32_t DataLength );
+
+    /**
+     *  @brief Read data from specified RTC STM32L496VGT6P Instance memory
+     *
+     *  @param[in]     RTCx       Peripheral
+     *  @param[in]     Address    Memory start address
+     *  @param[in/out] Data       Data buffer
+     *  @param[in]     DataLength Data buffer length
+     *
+     *  @return RTC_STM32L496VGT6P_Status_t
+     */
+    RTC_STM32L496VGT6P_Status_t RTC_STM32L496VGT6P_MemoryRead( RTC_STM32L496VGT6P_t RTCx, uint32_t Address, uint8_t * Data, uint32_t DataLength );
+
     // #############################################################################
     // #### Public Variable(s) #####################################################
     // #############################################################################
