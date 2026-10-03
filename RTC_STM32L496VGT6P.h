@@ -205,7 +205,7 @@ extern "C"
      *
      *  @param[in]     RTCx       Peripheral
      *  @param[in]     Address    Memory start address
-     *  @param[in/out] Data       Data buffer
+     *  @param[in,out] Data       Data buffer
      *  @param[in]     DataLength Data buffer length
      *
      *  @return RTC_STM32L496VGT6P_Status_t
